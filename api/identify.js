@@ -25,9 +25,11 @@ export default async function handler(req, res) {
             parts: [
               {
                 text:
-                  "Mira la fotografía e identifica el producto principal que alguien querría comprar. " +
-                  "Responde SOLO con el nombre corto del producto en español (máximo 5 palabras), " +
-                  "sin punto final ni explicaciones. Si no puedes identificar ningún producto responde exactamente: Producto desconocido",
+                  "Mira la fotografía y nombra el objeto principal que aparece, como si fuera algo que alguien quiere comprar " +
+                  "(una silla, una lámpara, unos zapatos, un celular, una planta, comida, ropa, etc.). " +
+                  "Si el nombre exacto o la marca no son claros, usa un nombre genérico del tipo de objeto. " +
+                  "Responde SOLO con el nombre corto en español (máximo 5 palabras), sin punto final ni explicaciones. " +
+                  "Responde exactamente 'Producto desconocido' únicamente si la imagen está vacía, borrosa o no muestra ningún objeto.",
               },
               { inline_data: { mime_type: "image/jpeg", data: image } },
             ],
