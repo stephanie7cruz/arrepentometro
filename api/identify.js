@@ -47,14 +47,14 @@ export default async function handler(req, res) {
   }
 
   // Reintentos: el modelo principal puede dar 503 por alta demanda.
-  const deadline = Date.now() + 9000;
+  const deadline = Date.now() + 22000;
   let lastError = "";
 
   for (const model of MODELS) {
     const left = deadline - Date.now();
     if (left < 1500) break;
     try {
-      const product = await ask(model, image, AbortSignal.timeout(Math.min(4000, left)));
+      const product = await ask(model, image, AbortSignal.timeout(Math.min(7000, left)));
       return res.status(200).json({ product });
     } catch (e) {
       lastError = String(e);
