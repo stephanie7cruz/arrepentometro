@@ -64,6 +64,10 @@
   .flash.go{animation:flash .7s ease-out}
   @keyframes flash{0%{opacity:.85}100%{opacity:0}}
   .hidden{display:none}
+  .logos{display:flex;gap:22px;align-items:center;justify-content:center;margin-top:6px}
+  .logos img{height:44px;width:auto;opacity:.9}
+  .credit{position:fixed;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));
+    text-align:center;font-size:.68rem;color:#6b6b7b;letter-spacing:.04em;pointer-events:none}
 </style>
 </head>
 <body>
@@ -79,6 +83,11 @@
   <input type="file" id="file" accept="image/*" capture="environment" hidden>
   <input type="file" id="fileGallery" accept="image/*" hidden>
   <button class="btn ghost" id="btnGallery">🖼️ Elegir de la galería</button>
+  <div class="logos">
+    <img src="assets/logo-sc.png" alt="Stephanie Cruz Guzman">
+    <img src="assets/logo-umb.webp" alt="Universidad Manuela Beltrán">
+  </div>
+  <div class="credit">Stephanie Cruz Guzman ® | UMB</div>
 </section>
 
 <!-- ANALIZANDO -->

@@ -33,17 +33,28 @@ export default async function handler(req, res) {
             ],
           },
         ],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 30 },
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 256,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     });
 
-    if (!r.ok) return res.status(200).json({ product: "Producto desconocido" });
+    if (!r.ok) {
+      const err = (await r.text()).slice(0, 300);
+      console.error("Gemini error", r.status, err);
+      return res.status(200).json({ product: "Producto desconocido", error: `${r.status} ${err}` });
+    }
 
     const data = await r.json();
-    let product = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    let product = parts.map((p) => p.text || "").join("").trim();
     product = product.replace(/[.\n"]/g, "").slice(0, 60);
-    return res.status(200).json({ product: product || "Producto desconocido" });
+    if (!product) console.error("Gemini sin texto", JSON.stringify(data).slice(0, 300));
+    return res.status(200).json({ product: product || "Producto desconocido", error: product ? undefined : "respuesta vacía" });
   } catch (e) {
-    return res.status(200).json({ product: "Producto desconocido" });
+    console.error("identify fallo", e);
+    return res.status(200).json({ product: "Producto desconocido", error: String(e) });
   }
 }
