@@ -1,5 +1,5 @@
 // Función serverless (Vercel). La API key vive en la variable de entorno GEMINI_API_KEY.
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
