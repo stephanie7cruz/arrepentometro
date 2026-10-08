@@ -177,7 +177,7 @@ function resizeImage(file, max=800){
 async function identify(dataUrl){
   try{
     const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 12000);
+    const t = setTimeout(()=>ctrl.abort(), 15000);
     const r = await fetch("/api/identify",{
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ image: dataUrl.split(",")[1] }), signal: ctrl.signal
