@@ -64,6 +64,12 @@
   .flash.go{animation:flash .7s ease-out}
   @keyframes flash{0%{opacity:.85}100%{opacity:0}}
   .hidden{display:none}
+  #result{overflow-y:auto;justify-content:flex-start;gap:16px}
+  #result > :first-child{margin-top:auto}
+  #result > :last-child{margin-bottom:auto}
+  .eco{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:320px;padding-bottom:12px}
+  .eco p{font-size:.85rem;line-height:1.4;color:#9fdc9f;font-weight:600}
+  .eco img{width:110px;height:auto;filter:drop-shadow(0 0 18px rgba(80,200,120,.45));animation:float 4s ease-in-out infinite}
   .logos{display:flex;gap:22px;align-items:center;justify-content:center;margin-top:6px}
   .logos img{height:44px;width:auto;opacity:.9}
   .credit{position:fixed;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));
@@ -108,6 +114,10 @@
   <div class="level" id="level"></div>
   <div class="quote" id="quote"></div>
   <button class="btn" id="btnAgain">ANALIZAR OTRA COMPRA</button>
+  <div class="eco">
+    <p id="ecoText"></p>
+    <img src="assets/planeta.png" alt="Planeta">
+  </div>
 </section>
 
 <script>
@@ -121,7 +131,31 @@ const GENERAL = [
   "Puedes vivir sin esto.",
   "Tu dinero merece una segunda oportunidad.",
   "¿Y si mejor no?",
-  "Probablemente ya tienes algo parecido."
+  "Probablemente ya tienes algo parecido.",
+  "¿Seguro que esto no puede esperar?",
+  "Tu bolsillo acaba de decir que no.",
+  "No comprar también es una opción.",
+  "Tal vez no lo necesitas tanto como crees.",
+  "Antes de comprar, mira lo que ya tienes.",
+  "Ese dinero podría quedarse contigo.",
+  "¿Necesidad o simple antojo?",
+  "No todo lo que te gusta tienes que comprarlo.",
+  "Tu carrito puede sobrevivir sin esto.",
+  "Piénsalo antes de pagar.",
+  "Quizás mañana ya no lo quieras.",
+  "El impulso no siempre sabe lo que necesitas.",
+  "¿Lo necesitas o simplemente lo quieres?",
+  "Tu futuro yo agradecerá esos ahorros.",
+  "Puedes cerrar la aplicación y seguir con tu vida.",
+  "No comprarlo también cuenta como una buena decisión.",
+  "Tal vez tu casa ya tiene suficiente.",
+  "Tu dinero tiene mejores planes.",
+  "Esto puede esperar. Tu dinero también quiere descansar.",
+  "No necesitas una razón para no comprarlo.",
+  "Si tienes dudas, quizá ya tienes la respuesta.",
+  "Tu yo del futuro podría agradecerte este momento.",
+  "Un minuto de emoción, meses ocupando espacio.",
+  "¿Realmente vale la pena llevártelo?"
 ];
 const ABSURD = [
   "Tu gato tampoco aprobaría esta compra.",
@@ -129,7 +163,94 @@ const ABSURD = [
   "Tu billetera acaba de pedir ayuda.",
   "Esta compra ha sido desaprobada por el comité de ahorro.",
   "El universo recomienda esperar.",
-  "No tenemos pruebas, pero tampoco dudas."
+  "No tenemos pruebas, pero tampoco dudas.",
+  "Tu gato fue consultado y se abstuvo de responder.",
+  "Una ardilla acaba de recomendar que ahorres.",
+  "El comité internacional de compras innecesarias votó en contra.",
+  "Tu planta tampoco cree que sea necesario.",
+  "Hemos preguntado a tres expertos. Ninguno existe.",
+  "El algoritmo dice que no. El algoritmo no explica por qué.",
+  "Un señor en internet recomienda no comprarlo.",
+  "El universo está ocupado, pero dice que esperes.",
+  "Tu billetera ha solicitado representación legal.",
+  "Tu tarjeta acaba de mirar hacia otro lado.",
+  "El departamento de decisiones cuestionables recomienda cancelar.",
+  "Hemos detectado una cantidad preocupante de ganas de comprar.",
+  "La ciencia no puede explicarlo, pero no deberías comprarlo.",
+  "Tu yo de otra dimensión tampoco lo compraría.",
+  "Una paloma acaba de desaprobar esta compra.",
+  "El comité de gastos innecesarios ha abierto una investigación.",
+  "Tu cuenta bancaria necesita un abrazo.",
+  "El producto parece inocente. Tu saldo no.",
+  "Hemos simulado tu futuro. Hay arrepentimiento.",
+  "No sabemos por qué, pero esto huele a arrepentimiento.",
+  "El Consejo Supremo de las Compras Dudosas dice: NO.",
+  "Tu billetera acaba de poner esta compra en lista negra.",
+  "La inteligencia artificial recomienda usar la inteligencia humana.",
+  "El universo tiene dudas. Nosotros también.",
+  "Se detectó una fuerte presencia de compra impulsiva.",
+  "Esta compra no pasó la prueba del sentido común.",
+  "El producto preguntó por qué lo querías. No supimos qué responder.",
+  "Tu futuro financiero acaba de cerrar sesión.",
+  "El planeta, tu billetera y tu sentido común están en una reunión.",
+  "Hemos encontrado una solución: no comprarlo.",
+  "El planeta acaba de poner esta compra en espera.",
+  "Un árbol imaginario acaba de caer.",
+  "El planeta no sabe qué es esto, pero tampoco lo pidió.",
+  "Tu compra tiene huella. Mejor que no deje otra.",
+  "El planeta recomienda conservar los recursos… y tu dinero.",
+  "La Tierra tiene suficientes cosas. Gracias por preguntar.",
+  "Otro producto, otro futuro residuo.",
+  "El planeta votó. El resultado fue: piensa otra vez.",
+  "La naturaleza acaba de mirar tu carrito con preocupación.",
+  "Este producto quiere entrar a tu casa. El planeta dice que no.",
+  "Hemos detectado un posible futuro residuo.",
+  "El planeta no necesita otra compra impulsiva.",
+  "Tu bolsillo y la Tierra forman una alianza temporal.",
+  "Menos compras. Menos residuos. Menos arrepentimiento.",
+  "El planeta recomienda: déjalo donde lo encontraste.",
+  "La Tierra sobrevivirá sin esto. Tú probablemente también.",
+  "El planeta acaba de solicitar que cierres el carrito.",
+  "No sabemos cuánto lo usarás, pero sabemos que algún día será residuo.",
+  "Compra detectada. Necesidad ambiental: no encontrada.",
+  "El planeta agradece que lo hayas pensado. Ahora no lo compres."
+];
+// Frases ecológicas que aparecen encima de la imagen del planeta.
+const ECO = [
+  "El planeta puede vivir sin esta compra. Tú también.",
+  "Tu bolsillo y el planeta te piden pensarlo dos veces.",
+  "Menos compras impulsivas, más planeta.",
+  "Tu próxima compra también tiene un impacto.",
+  "Quizás ya tienes algo que cumple la misma función.",
+  "El mejor residuo es el que nunca generaste.",
+  "No sabemos si lo necesitas, pero el planeta recomienda esperar.",
+  "Tu cuenta bancaria y el planeta están de acuerdo: piénsalo.",
+  "El planeta no pidió otro.",
+  "El descuento termina. El residuo se queda.",
+  "Tu yo del futuro quizá no quiera este producto. El planeta tampoco.",
+  "El planeta ha solicitado que reconsideres esta compra.",
+  "¿Seguro que quieres convertir esto en un futuro residuo?",
+  "Tu dinero quería quedarse contigo. El planeta también.",
+  "Lo que no compras también es una forma de cuidar el planeta.",
+  "Cada compra tiene una huella. ¿Vale la pena dejarla?",
+  "Antes de comprar algo nuevo, piensa en todo lo que ya tienes.",
+  "Menos consumo, menos residuos, más planeta.",
+  "El planeta no necesita que tengas más. Necesita que desperdicies menos.",
+  "Cada producto que compras algún día será un residuo.",
+  "Lo barato puede costarle caro al planeta.",
+  "No todo lo que necesitas comprar necesitas tener.",
+  "Comprar menos también es consumir responsablemente.",
+  "Antes de comprar, piensa en lo que quedará cuando dejes de usarlo.",
+  "Tu compra dura un tiempo. Su impacto puede durar mucho más.",
+  "El planeta también paga por nuestras compras.",
+  "Una compra innecesaria es un residuo esperando su momento.",
+  "Si ya tienes algo que funciona, quizá no necesitas otro.",
+  "La mejor compra para el planeta puede ser no comprar.",
+  "Antes de añadir algo a tu carrito, piensa qué estás añadiendo al planeta.",
+  "Tu consumo deja huella. Procura que no sea innecesaria.",
+  "Cada cosa que compras necesita recursos para existir.",
+  "No necesitas comprar más para vivir mejor.",
+  "El planeta tiene recursos limitados. Tus compras también deberían tener límites."
 ];
 const UNKNOWN = ["No sabemos qué es, pero probablemente tampoco lo necesitabas."];
 const STEPS = [
@@ -217,9 +338,11 @@ async function analyze(file){
   $("prod").textContent = product;
   $("level").textContent = lvl.name;
   $("quote").innerHTML = `“${phrase}”<br><b style="font-style:normal;font-size:.85rem;color:${lvl.color}">${lvl.tag}</b>`;
+  $("ecoText").textContent = pick(ECO);
   $("pct").textContent = "0%";
   $("meterFill").style.width = "0";
   show("result");
+  $("result").scrollTop = 0;
 
   const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
   if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
