@@ -1,6 +1,7 @@
 // Función serverless (Vercel). La API key vive en la variable de entorno GEMINI_API_KEY.
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-flash-latest";
+// Cada modelo tiene su propia cuota gratuita: se prueban en orden hasta que uno responda.
+const MODELS = (process.env.GEMINI_MODELS ||
+  "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.7-flash,gemini-3.8-flash").split(",");
 
 const PROMPT =
   "Mira la fotografía y nombra el objeto principal que aparece, como si fuera algo que alguien quiere comprar " +
@@ -46,15 +47,14 @@ export default async function handler(req, res) {
   }
 
   // Reintentos: el modelo principal puede dar 503 por alta demanda.
-  const attempts = [MODEL, FALLBACK_MODEL, MODEL, FALLBACK_MODEL];
   const deadline = Date.now() + 9000;
   let lastError = "";
 
-  for (const model of attempts) {
+  for (const model of MODELS) {
     const left = deadline - Date.now();
     if (left < 1500) break;
     try {
-      const product = await ask(model, image, AbortSignal.timeout(Math.min(5000, left)));
+      const product = await ask(model, image, AbortSignal.timeout(Math.min(4000, left)));
       return res.status(200).json({ product });
     } catch (e) {
       lastError = String(e);
