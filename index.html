@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<title>Arrepentómetro</title>
+<style>
+  :root{
+    --bg:#0b0b12; --card:#15151f; --text:#f4f4f8; --muted:#8b8ba0;
+    --accent:#ff3b4e; --lvl:#ffd23f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(600px 400px at 50% -10%,color-mix(in srgb,var(--lvl) 25%,transparent),transparent 70%);
+    transition:background .6s}
+  .screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));text-align:center;gap:20px}
+  .screen.active{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  .logo{font-size:84px;filter:drop-shadow(0 0 24px rgba(255,59,78,.5));animation:float 3s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-8px)}}
+  h1{font-size:2rem;letter-spacing:.04em;font-weight:900}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);max-width:300px;line-height:1.5}
+  .btn{border:0;border-radius:18px;padding:18px 28px;font-size:1.05rem;font-weight:800;letter-spacing:.05em;
+    color:#fff;background:linear-gradient(135deg,#ff3b4e,#ff7a3b);width:100%;max-width:340px;cursor:pointer;
+    box-shadow:0 10px 30px rgba(255,59,78,.4);transition:transform .15s}
+  .btn:active{transform:scale(.96)}
+  .btn.ghost{background:transparent;border:2px solid #2a2a3a;box-shadow:none;color:var(--muted);font-size:.9rem;padding:14px}
+  .tiny{color:var(--muted);font-size:.75rem}
+
+  /* Análisis */
+  .preview{width:180px;height:180px;border-radius:28px;object-fit:cover;border:3px solid #2a2a3a;position:relative}
+  .scan{position:relative;width:180px;height:180px;border-radius:28px;overflow:hidden}
+  .scan img{width:100%;height:100%;object-fit:cover}
+  .scan::after{content:"";position:absolute;left:0;right:0;height:4px;background:var(--accent);
+    box-shadow:0 0 18px 6px rgba(255,59,78,.7);animation:scan 1.4s ease-in-out infinite}
+  @keyframes scan{0%{top:0}50%{top:calc(100% - 4px)}100%{top:0}}
+  .step{font-size:1.15rem;font-weight:700;min-height:1.6em}
+  .bar{width:100%;max-width:300px;height:8px;background:#22222f;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff3b4e,#ffd23f);transition:width .4s}
+
+  /* Resultado */
+  #result.active{animation:shake .6s}
+  @keyframes shake{10%,90%{transform:translateX(-4px)}20%,80%{transform:translateX(7px)}30%,50%,70%{transform:translateX(-10px)}40%,60%{transform:translateX(10px)}}
+  .alert{font-size:.8rem;letter-spacing:.3em;font-weight:900;color:var(--lvl);animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .prod{font-size:1.2rem;font-weight:700}
+  .pct{font-size:6.5rem;font-weight:900;line-height:1;color:var(--lvl);text-shadow:0 0 40px var(--lvl)}
+  .idx{font-size:.8rem;letter-spacing:.2em;color:var(--muted)}
+  .meter{width:100%;max-width:320px;height:18px;background:#22222f;border-radius:99px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0;background:var(--lvl);box-shadow:0 0 20px var(--lvl);
+    border-radius:99px;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+  .level{font-weight:900;letter-spacing:.08em;color:var(--lvl);font-size:1.1rem}
+  .quote{max-width:320px;line-height:1.5;font-size:1.05rem;font-style:italic;background:var(--card);
+    padding:16px 18px;border-radius:18px;border-left:4px solid var(--lvl)}
+  .thumb{width:64px;height:64px;border-radius:16px;object-fit:cover;border:2px solid var(--lvl)}
+  .row{display:flex;gap:14px;align-items:center}
+  .flash{position:fixed;inset:0;background:var(--lvl);opacity:0;pointer-events:none}
+  .flash.go{animation:flash .7s ease-out}
+  @keyframes flash{0%{opacity:.85}100%{opacity:0}}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+
+<!-- INICIO -->
+<section class="screen active" id="home">
+  <div class="logo">🔮</div>
+  <h1>ARREPENTÓ<span>METRO</span></h1>
+  <p class="sub">Fotografía lo que quieres comprar y calcularemos cuánto te vas a arrepentir.</p>
+  <button class="btn" id="btnPick">📸 ANALIZAR MI COMPRA</button>
+  <p class="tiny">Tecnología avanzada para llegar siempre a la misma conclusión.</p>
+  <input type="file" id="file" accept="image/*" capture="environment" hidden>
+  <input type="file" id="fileGallery" accept="image/*" hidden>
+  <button class="btn ghost" id="btnGallery">🖼️ Elegir de la galería</button>
+</section>
+
+<!-- ANALIZANDO -->
+<section class="screen" id="loading">
+  <div class="scan"><img id="scanImg" alt=""></div>
+  <div class="step" id="step">Analizando…</div>
+  <div class="bar"><i id="barFill"></i></div>
+  <p class="tiny" id="vars">Procesando 47 variables…</p>
+</section>
+
+<!-- RESULTADO -->
+<section class="screen" id="result">
+  <div class="alert">🚨 ALERTA 🚨</div>
+  <div class="row"><img class="thumb" id="thumb" alt=""><div class="prod" id="prod"></div></div>
+  <div class="pct" id="pct">0%</div>
+  <div class="idx">ÍNDICE DE ARREPENTIMIENTO</div>
+  <div class="meter"><i id="meterFill"></i></div>
+  <div class="level" id="level"></div>
+  <div class="quote" id="quote"></div>
+  <button class="btn" id="btnAgain">ANALIZAR OTRA COMPRA</button>
+</section>
+
+<script>
+const GENERAL = [
+  "¿En verdad necesitas esto?",
+  "Tu yo del futuro te está pidiendo que no lo compres.",
+  "Es mejor ahorrar.",
+  "El descuento no significa que lo necesites.",
+  "Tu cuenta bancaria no está de acuerdo.",
+  "Piénsalo otra vez.",
+  "Puedes vivir sin esto.",
+  "Tu dinero merece una segunda oportunidad.",
+  "¿Y si mejor no?",
+  "Probablemente ya tienes algo parecido."
+];
+const ABSURD = [
+  "Tu gato tampoco aprobaría esta compra.",
+  "Hemos consultado al futuro y no le gustó.",
+  "Tu billetera acaba de pedir ayuda.",
+  "Esta compra ha sido desaprobada por el comité de ahorro.",
+  "El universo recomienda esperar.",
+  "No tenemos pruebas, pero tampoco dudas."
+];
+const UNKNOWN = ["No sabemos qué es, pero probablemente tampoco lo necesitabas."];
+const STEPS = [
+  "🔍 Analizando necesidad…",
+  "💰 Evaluando impacto financiero…",
+  "🌱 Evaluando impacto de consumo…",
+  "📊 Procesando 47 variables…",
+  "🧠 Consultando tu futuro…"
+];
+const LEVELS = [
+  { min:99, name:"💀 ARREPENTIMIENTO CRÍTICO", color:"#b517ff", tag:"¿QUÉ ESTÁS HACIENDO?" },
+  { min:95, name:"🔴 ARREPENTIMIENTO EXTREMO", color:"#ff3b4e", tag:"NO LO COMPRES." },
+  { min:90, name:"🟠 ARREPENTIMIENTO MUY ALTO", color:"#ff8a3b", tag:"Probablemente vas a arrepentirte." },
+  { min:85, name:"🟡 ARREPENTIMIENTO ALTO", color:"#ffd23f", tag:"Piénsalo un poquito más." }
+];
+
+const $ = id => document.getElementById(id);
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// La regla fundamental: siempre entre 85 y 100.
+const calcularArrepentimiento = () => rand(85,100);
+const obtenerNivel = i => LEVELS.find(l => i >= l.min);
+
+// Reduce la imagen para que la subida sea rápida.
+function resizeImage(file, max=800){
+  return new Promise((resolve,reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max/Math.max(img.width,img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg",0.8));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+async function identify(dataUrl){
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 12000);
+    const r = await fetch("/api/identify",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ image: dataUrl.split(",")[1] }), signal: ctrl.signal
+    });
+    clearTimeout(t);
+    const j = await r.json();
+    return j.product || "Producto desconocido";
+  }catch(e){ return "Producto desconocido"; }
+}
+
+async function analyze(file){
+  if(!file) return;
+  let dataUrl;
+  try{ dataUrl = await resizeImage(file); }catch(e){ return; }
+  $("scanImg").src = dataUrl;
+  $("barFill").style.width = "0";
+  show("loading");
+
+  // La IA identifica mientras corre la animación teatral.
+  const productPromise = identify(dataUrl);
+  const animation = (async()=>{
+    for(let i=0;i<STEPS.length;i++){
+      $("step").textContent = STEPS[i];
+      $("barFill").style.width = ((i+1)/STEPS.length*100)+"%";
+      await sleep(900);
+    }
+  })();
+  const [product] = await Promise.all([productPromise, animation]);
+
+  const unknown = /desconocido/i.test(product);
+  const idx = calcularArrepentimiento();
+  const lvl = obtenerNivel(idx);
+  const phrase = unknown ? pick(UNKNOWN) : pick([...GENERAL, ...ABSURD]);
+
+  document.documentElement.style.setProperty("--lvl", lvl.color);
+  $("thumb").src = dataUrl;
+  $("prod").textContent = product;
+  $("level").textContent = lvl.name;
+  $("quote").innerHTML = `“${phrase}”<br><b style="font-style:normal;font-size:.85rem;color:${lvl.color}">${lvl.tag}</b>`;
+  $("pct").textContent = "0%";
+  $("meterFill").style.width = "0";
+  show("result");
+
+  const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+  if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+
+  // Contador animado
+  const start = performance.now();
+  const tick = now => {
+    const p = Math.min(1,(now-start)/1400);
+    $("pct").textContent = Math.round(idx*p)+"%";
+    if(p<1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  requestAnimationFrame(()=>{ $("meterFill").style.width = idx+"%"; });
+}
+
+$("btnPick").onclick = () => $("file").click();
+$("btnGallery").onclick = () => $("fileGallery").click();
+$("file").onchange = e => { analyze(e.target.files[0]); e.target.value=""; };
+$("fileGallery").onchange = e => { analyze(e.target.files[0]); e.target.value=""; };
+$("btnAgain").onclick = () => { document.documentElement.style.setProperty("--lvl","#ffd23f"); show("home"); };
+</script>
+</body>
+</html>
