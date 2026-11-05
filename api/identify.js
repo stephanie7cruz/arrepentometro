@@ -53,6 +53,46 @@ async function ask(model, image, signal) {
   return { product, phrase: clean(j.phrase, 600) };
 }
 
+function race(image, deadline) {
+  return new Promise((resolve) => {
+    const errors = [];
+    const ctrls = [];
+    let done = false, next = 0, active = 0, timer;
+    const finish = (v) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      ctrls.forEach((c) => c.abort());
+      resolve(v);
+    };
+    const launch = () => {
+      if (done) return;
+      clearTimeout(timer);
+      const left = deadline - Date.now();
+      if (next >= MODELS.length || left < 1500) {
+        if (active === 0) finish({ errors });
+        return;
+      }
+      const model = MODELS[next++];
+      const c = new AbortController();
+      ctrls.push(c);
+      active++;
+      const t = setTimeout(() => c.abort(), Math.min(12000, left));
+      ask(model, image, c.signal)
+        .then((r) => { clearTimeout(t); finish(r); })
+        .catch((e) => {
+          clearTimeout(t);
+          active--;
+          errors.push(String(e).slice(0, 160));
+          console.error("identify intento fallido:", String(e));
+          launch();
+        });
+      timer = setTimeout(launch, 4000);
+    };
+    launch();
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ product: "Producto desconocido" });
@@ -63,22 +103,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ product: "Producto desconocido" });
   }
 
-  // Reintentos: el modelo principal puede dar 503 por alta demanda.
-  const deadline = Date.now() + 22000;
-  const errors = [];
-
-  for (const model of MODELS) {
-    const left = deadline - Date.now();
-    if (left < 1500) break;
-    try {
-      const result = await ask(model, image, AbortSignal.timeout(Math.min(7000, left)));
-      return res.status(200).json(result);
-    } catch (e) {
-      errors.push(String(e).slice(0, 160));
-      console.error("identify intento fallido:", String(e));
-      await new Promise((r) => setTimeout(r, 400));
-    }
-  }
-
-  return res.status(200).json({ product: "Producto desconocido", errors });
+  // Los modelos se lanzan escalonados: si uno tarda o falla, arranca el siguiente sin esperar
+  // y gana la primera respuesta válida. Así aguanta mejor varias personas a la vez.
+  const result = await race(image, Date.now() + 18000);
+  if (result.product) return res.status(200).json(result);
+  return res.status(200).json({ product: "Producto desconocido", errors: result.errors });
 }

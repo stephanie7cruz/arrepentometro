@@ -295,18 +295,26 @@ function resizeImage(file, max=800){
   });
 }
 
-async function identify(dataUrl){
+async function identifyOnce(dataUrl){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), 24000);
   try{
-    const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 26000);
     const r = await fetch("/api/identify",{
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ image: dataUrl.split(",")[1] }), signal: ctrl.signal
     });
-    clearTimeout(t);
     const j = await r.json();
-    return { product: j.product || "Producto desconocido", phrase: j.phrase || "" };
-  }catch(e){ return { product: "Producto desconocido", phrase: "" }; }
+    return { product: j.product || "Producto desconocido", phrase: j.phrase || "", failed: !!j.errors };
+  }catch(e){ return { product: "Producto desconocido", phrase: "", failed: true }; }
+  finally{ clearTimeout(t); }
+}
+
+// Si el servidor estaba saturado, se reintenta una vez.
+async function identify(dataUrl){
+  const first = await identifyOnce(dataUrl);
+  if(!first.failed) return first;
+  await sleep(1500);
+  return identifyOnce(dataUrl);
 }
 
 async function analyze(file){
