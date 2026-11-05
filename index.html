@@ -91,7 +91,7 @@
   <button class="btn ghost" id="btnGallery">🖼️ Elegir de la galería</button>
   <div class="logos">
     <img src="assets/logo-sc.png" alt="Stephanie Cruz Guzman">
-    <img src="assets/logo-umb.webp" alt="Universidad Manuela Beltrán">
+    <img src="assets/logo-umb.png" alt="Universidad Manuela Beltrán">
   </div>
   <div class="credit">Stephanie Cruz Guzman ® | UMB</div>
 </section>
@@ -305,8 +305,8 @@ async function identify(dataUrl){
     });
     clearTimeout(t);
     const j = await r.json();
-    return j.product || "Producto desconocido";
-  }catch(e){ return "Producto desconocido"; }
+    return { product: j.product || "Producto desconocido", phrase: j.phrase || "" };
+  }catch(e){ return { product: "Producto desconocido", phrase: "" }; }
 }
 
 async function analyze(file){
@@ -326,12 +326,12 @@ async function analyze(file){
       await sleep(900);
     }
   })();
-  const [product] = await Promise.all([productPromise, animation]);
+  const [{product, phrase: aiPhrase}] = await Promise.all([productPromise, animation]);
 
   const unknown = /desconocido/i.test(product);
   const idx = calcularArrepentimiento();
   const lvl = obtenerNivel(idx);
-  const phrase = unknown ? pick(UNKNOWN) : pick([...GENERAL, ...ABSURD]);
+  const phrase = unknown ? pick(UNKNOWN) : (aiPhrase || pick([...GENERAL, ...ABSURD]));
 
   document.documentElement.style.setProperty("--lvl", lvl.color);
   $("thumb").src = dataUrl;

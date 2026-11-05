@@ -7,8 +7,14 @@ const PROMPT =
   "Mira la fotografía y nombra el objeto principal que aparece, como si fuera algo que alguien quiere comprar " +
   "(una silla, una lámpara, unos zapatos, un celular, una planta, comida, ropa, etc.). " +
   "Si el nombre exacto o la marca no son claros, usa un nombre genérico del tipo de objeto. " +
-  "Responde SOLO con el nombre corto en español (máximo 5 palabras), sin punto final ni explicaciones. " +
-  "Responde exactamente 'Producto desconocido' únicamente si la imagen está vacía, borrosa o no muestra ningún objeto.";
+  "Además escribe UNA frase en español (máximo 160 caracteres) para convencer a la persona de NO comprarlo, " +
+  "específica de ese objeto, exagerada, dramática y con humor negro suave, mencionando un riesgo ridículo pero creíble " +
+  "(ejemplos: de un esfero: 'Se te puede explotar en el bolsillo y arruinarte el pantalón favorito.'; " +
+  "de una botella de agua: 'Podría traer microplásticos que ya te están construyendo una cuchara por dentro.'; " +
+  "de una sopa: 'Está tan grasosa que tus arterias ya están pidiendo un abogado.'). " +
+  "No uses insultos, no hables de enfermedades graves reales ni des consejos médicos; que sea claramente una broma. " +
+  "Responde SOLO un JSON con las claves product (nombre corto, máximo 5 palabras, sin punto final) y phrase. " +
+  "Si la imagen está vacía, borrosa o no muestra ningún objeto, usa product 'Producto desconocido' y phrase vacía.";
 
 async function ask(model, image, signal) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
@@ -22,8 +28,9 @@ async function ask(model, image, signal) {
     body: JSON.stringify({
       contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: image } }] }],
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 256,
+        temperature: 0.9,
+        maxOutputTokens: 400,
+        responseMimeType: "application/json",
         thinkingConfig: { thinkingBudget: 0 },
       },
     }),
@@ -31,9 +38,13 @@ async function ask(model, image, signal) {
   if (!r.ok) throw new Error(`${model} ${r.status} ${(await r.text()).slice(0, 200)}`);
   const data = await r.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const text = parts.map((p) => p.text || "").join("").replace(/[.\n"]/g, "").trim().slice(0, 60);
-  if (!text) throw new Error(`${model} respuesta vacía`);
-  return text;
+  const raw = parts.map((p) => p.text || "").join("");
+  let j;
+  try { j = JSON.parse(raw); } catch { j = { product: raw }; }
+  const clean = (v, n) => String(v || "").replace(/[\n"]/g, " ").trim().slice(0, n);
+  const product = clean(j.product, 60).replace(/\.$/, "");
+  if (!product) throw new Error(`${model} respuesta vacía`);
+  return { product, phrase: clean(j.phrase, 200) };
 }
 
 export default async function handler(req, res) {
@@ -48,20 +59,20 @@ export default async function handler(req, res) {
 
   // Reintentos: el modelo principal puede dar 503 por alta demanda.
   const deadline = Date.now() + 22000;
-  let lastError = "";
+  const errors = [];
 
   for (const model of MODELS) {
     const left = deadline - Date.now();
     if (left < 1500) break;
     try {
-      const product = await ask(model, image, AbortSignal.timeout(Math.min(7000, left)));
-      return res.status(200).json({ product });
+      const result = await ask(model, image, AbortSignal.timeout(Math.min(7000, left)));
+      return res.status(200).json(result);
     } catch (e) {
-      lastError = String(e);
-      console.error("identify intento fallido:", lastError);
+      errors.push(String(e).slice(0, 160));
+      console.error("identify intento fallido:", String(e));
       await new Promise((r) => setTimeout(r, 400));
     }
   }
 
-  return res.status(200).json({ product: "Producto desconocido", error: lastError });
+  return res.status(200).json({ product: "Producto desconocido", errors });
 }
