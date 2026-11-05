@@ -59,13 +59,6 @@
   .level{font-weight:900;letter-spacing:.08em;color:var(--lvl);font-size:1.1rem}
   .quote{max-width:320px;line-height:1.5;font-size:1.05rem;font-style:italic;background:var(--card);
     padding:16px 18px;border-radius:18px;border-left:4px solid var(--lvl)}
-  .calc{max-width:320px;width:100%;background:var(--card);border-radius:14px;text-align:left;font-size:.82rem;line-height:1.5}
-  .calc summary{cursor:pointer;padding:12px 16px;font-weight:700;color:var(--lvl);list-style:none;text-align:center}
-  .calc summary::-webkit-details-marker{display:none}
-  .calc .body{padding:0 16px 14px;color:#cfcfdc}
-  .calc .f{font-family:ui-monospace,Consolas,monospace;background:#0e0e16;border-radius:10px;padding:8px 10px;margin:8px 0;color:var(--text);overflow-x:auto;white-space:nowrap}
-  .calc li{margin-left:18px}
-  .calc small{display:block;margin-top:8px;color:var(--muted);font-size:.7rem}
   .thumb{width:64px;height:64px;border-radius:16px;object-fit:cover;border:2px solid var(--lvl)}
   .row{display:flex;gap:14px;align-items:center}
   .flash{position:fixed;inset:0;background:var(--lvl);opacity:0;pointer-events:none}
@@ -122,7 +115,6 @@
   <div class="meter"><i id="meterFill"></i></div>
   <div class="level" id="level"></div>
   <div class="quote" id="quote"></div>
-  <details class="calc" id="calc"><summary>🧮 ¿Cómo se calculó este %?</summary><div class="body" id="calcBody"></div></details>
   <button class="btn" id="btnAgain">ANALIZAR OTRA COMPRA</button>
   <div class="eco">
     <p id="ecoText"></p>
@@ -294,25 +286,6 @@ function calcularArrepentimiento(){
   const bruto = 85+15*suma;
   return { f, t, suma, bruto, idx:Math.round(bruto) };
 }
-const num = (x,d=2) => String(+x.toFixed(d)).replace(".",",");
-function explicarCalculo(c){
-  const {f,t,suma,bruto,idx} = c;
-  return `
-    <div class="f">IA = 85 + 15 × (0,40·N + 0,35·R + 0,25·E)</div>
-    <ul>
-      <li><b>N</b> = nivel de impulso: ${num(f.n)}</li>
-      <li><b>R</b> = riesgo de falla del producto: ${num(f.r)}</li>
-      <li><b>E</b> = huella ambiental estimada: ${num(f.e)}</li>
-    </ul>
-    <div class="f">IA = 85 + 15 × (0,40·${num(f.n)} + 0,35·${num(f.r)} + 0,25·${num(f.e)})<br>
-    IA = 85 + 15 × (${num(t.n,4)} + ${num(t.r,4)} + ${num(t.e,4)})<br>
-    IA = 85 + 15 × ${num(suma,4)}<br>
-    IA = 85 + ${num(15*suma)}<br>
-    IA = ${num(bruto)} ≈ <b>${idx} %</b></div>
-    <p>Los pesos suman 1, así que la parte variable aporta entre 0 y 15 puntos. Por eso el resultado siempre queda entre <b>85 %</b> y <b>100 %</b>.</p>
-    <small>*Cálculo con fines humorísticos: los factores son simulados, no una medición real.</small>`;
-}
-const obtenerNivel = i => LEVELS.find(l => i >= l.min);
 
 // Reduce la imagen para que la subida sea rápida.
 function resizeImage(file, max=800){
@@ -399,8 +372,6 @@ async function analyze(file){
   $("level").textContent = lvl.name;
   $("quote").innerHTML = `“${phrase}”<br><b style="font-style:normal;font-size:.85rem;color:${lvl.color}">${lvl.tag}</b>`;
   $("ecoText").textContent = pick(ECO);
-  $("calcBody").innerHTML = explicarCalculo(calc);
-  $("calc").open = false;
   $("pct").textContent = "0%";
   $("meterFill").style.width = "0";
   show("result");
