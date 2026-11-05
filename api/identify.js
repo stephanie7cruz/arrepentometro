@@ -1,7 +1,7 @@
 // Función serverless (Vercel). La API key vive en la variable de entorno GEMINI_API_KEY.
 // Cada modelo tiene su propia cuota gratuita: se prueban en orden hasta que uno responda.
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.7-flash,gemini-3.8-flash").split(",");
+  "gemini-3.1-flash-lite,gemini-3.7-flash,gemini-3.8-flash,gemini-3.5-flash-lite").split(",");
 
 const PROMPT =
   "Mira la fotografía y nombra el objeto principal que aparece, como si fuera algo que alguien quiere comprar " +

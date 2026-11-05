@@ -287,6 +287,8 @@ function calcularArrepentimiento(){
   return { f, t, suma, bruto, idx:Math.round(bruto) };
 }
 
+const obtenerNivel = i => LEVELS.find(l => i >= l.min);
+
 // Reduce la imagen para que la subida sea rápida.
 function resizeImage(file, max=800){
   return new Promise((resolve,reject)=>{
@@ -348,47 +350,53 @@ async function analyze(file){
   $("barFill").style.width = "0";
   show("loading");
 
-  // La IA identifica mientras corre la animación teatral.
-  const productPromise = identify(dataUrl);
-  const animation = (async()=>{
-    for(let i=0;i<STEPS.length;i++){
-      $("step").textContent = STEPS[i];
-      $("barFill").style.width = ((i+1)/STEPS.length*100)+"%";
-      await sleep(900);
-    }
-  })();
-  const [{product, phrase: aiPhrase}] = await Promise.all([productPromise, animation]);
+  try{
+    // La IA identifica mientras corre la animación teatral.
+    const productPromise = identify(dataUrl);
+    const animation = (async()=>{
+      for(let i=0;i<STEPS.length;i++){
+        $("step").textContent = STEPS[i];
+        $("barFill").style.width = ((i+1)/STEPS.length*100)+"%";
+        await sleep(900);
+      }
+    })();
+    const [{product, phrase: aiPhrase}] = await Promise.all([productPromise, animation]);
 
-  if(!/desconocido/i.test(product)) sumarUso();
-  const unknown = /desconocido/i.test(product);
-  const calc = calcularArrepentimiento();
-  const idx = calc.idx;
-  const lvl = obtenerNivel(idx);
-  const phrase = unknown ? pick(UNKNOWN) : (aiPhrase || pick([...GENERAL, ...ABSURD]));
+    if(!/desconocido/i.test(product)) sumarUso();
+    const unknown = /desconocido/i.test(product);
+    const calc = calcularArrepentimiento();
+    const idx = calc.idx;
+    const lvl = obtenerNivel(idx);
+    const phrase = unknown ? pick(UNKNOWN) : (aiPhrase || pick([...GENERAL, ...ABSURD]));
 
-  document.documentElement.style.setProperty("--lvl", lvl.color);
-  $("thumb").src = dataUrl;
-  $("prod").textContent = product;
-  $("level").textContent = lvl.name;
-  $("quote").innerHTML = `“${phrase}”<br><b style="font-style:normal;font-size:.85rem;color:${lvl.color}">${lvl.tag}</b>`;
-  $("ecoText").textContent = pick(ECO);
-  $("pct").textContent = "0%";
-  $("meterFill").style.width = "0";
-  show("result");
-  $("result").scrollTop = 0;
+    document.documentElement.style.setProperty("--lvl", lvl.color);
+    $("thumb").src = dataUrl;
+    $("prod").textContent = product;
+    $("level").textContent = lvl.name;
+    $("quote").innerHTML = `“${phrase}”<br><b style="font-style:normal;font-size:.85rem;color:${lvl.color}">${lvl.tag}</b>`;
+    $("ecoText").textContent = pick(ECO);
+    $("pct").textContent = "0%";
+    $("meterFill").style.width = "0";
+    show("result");
+    $("result").scrollTop = 0;
 
-  const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+    const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+    if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
 
-  // Contador animado
-  const start = performance.now();
-  const tick = now => {
-    const p = Math.min(1,(now-start)/1400);
-    $("pct").textContent = Math.round(idx*p)+"%";
-    if(p<1) requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-  requestAnimationFrame(()=>{ $("meterFill").style.width = idx+"%"; });
+    // Contador animado
+    const start = performance.now();
+    const tick = now => {
+      const p = Math.min(1,(now-start)/1400);
+      $("pct").textContent = Math.round(idx*p)+"%";
+      if(p<1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    requestAnimationFrame(()=>{ $("meterFill").style.width = idx+"%"; });
+  }catch(e){
+    console.error(e);
+    show("home"); pintarCupo();
+    $("quota").textContent = "Algo falló. Inténtalo de nuevo.";
+  }
 }
 
 $("btnPick").onclick = () => $("file").click();
