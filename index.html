@@ -328,14 +328,14 @@ async function identify(dataUrl){
 }
 
 // Máximo de análisis por persona (se guarda en el propio dispositivo).
-const MAX_FOTOS = 5;
+const MAX_FOTOS = 7;
 const usados = () => { try{ return +localStorage.getItem("arrep_usos")||0; }catch(e){ return 0; } };
 const sumarUso = () => { try{ localStorage.setItem("arrep_usos", usados()+1); }catch(e){} };
 function pintarCupo(){
   const left = Math.max(0, MAX_FOTOS-usados());
   $("quota").textContent = left>0
     ? `Te quedan ${left} análisis de ${MAX_FOTOS}.`
-    : "Ya usaste tus 5 análisis. ¡Gracias por probar el ArrepentóMetro!";
+    : `Ya usaste tus ${MAX_FOTOS} análisis. ¡Gracias por probar el ArrepentóMetro!`;
   ["btnPick","btnGallery"].forEach(id=>{ $(id).disabled = left<=0; });
 }
 
