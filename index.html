@@ -30,6 +30,7 @@
     color:#fff;background:linear-gradient(135deg,#ff3b4e,#ff7a3b);width:100%;max-width:340px;cursor:pointer;
     box-shadow:0 10px 30px rgba(255,59,78,.4);transition:transform .15s}
   .btn:active{transform:scale(.96)}
+  .btn:disabled{opacity:.35;pointer-events:none;filter:grayscale(.6)}
   .btn.ghost{background:transparent;border:2px solid #2a2a3a;box-shadow:none;color:var(--muted);font-size:.9rem;padding:14px}
   .tiny{color:var(--muted);font-size:.75rem}
 
@@ -86,6 +87,7 @@
   <p class="sub">Fotografía lo que quieres comprar y calcularemos cuánto te vas a arrepentir.</p>
   <button class="btn" id="btnPick">📸 ANALIZAR MI COMPRA</button>
   <p class="tiny">Tecnología avanzada para llegar siempre a la misma conclusión.</p>
+  <p class="tiny" id="quota"></p>
   <input type="file" id="file" accept="image/*" capture="environment" hidden>
   <input type="file" id="fileGallery" accept="image/*" hidden>
   <button class="btn ghost" id="btnGallery">🖼️ Elegir de la galería</button>
@@ -317,8 +319,21 @@ async function identify(dataUrl){
   return identifyOnce(dataUrl);
 }
 
+// Máximo de análisis por persona (se guarda en el propio dispositivo).
+const MAX_FOTOS = 5;
+const usados = () => { try{ return +localStorage.getItem("arrep_usos")||0; }catch(e){ return 0; } };
+const sumarUso = () => { try{ localStorage.setItem("arrep_usos", usados()+1); }catch(e){} };
+function pintarCupo(){
+  const left = Math.max(0, MAX_FOTOS-usados());
+  $("quota").textContent = left>0
+    ? `Te quedan ${left} análisis de ${MAX_FOTOS}.`
+    : "Ya usaste tus 5 análisis. ¡Gracias por probar el ArrepentóMetro!";
+  ["btnPick","btnGallery"].forEach(id=>{ $(id).disabled = left<=0; });
+}
+
 async function analyze(file){
   if(!file) return;
+  if(usados()>=MAX_FOTOS){ pintarCupo(); return; }
   let dataUrl;
   try{ dataUrl = await resizeImage(file); }catch(e){ return; }
   $("scanImg").src = dataUrl;
@@ -336,6 +351,7 @@ async function analyze(file){
   })();
   const [{product, phrase: aiPhrase}] = await Promise.all([productPromise, animation]);
 
+  if(!/desconocido/i.test(product)) sumarUso();
   const unknown = /desconocido/i.test(product);
   const idx = calcularArrepentimiento();
   const lvl = obtenerNivel(idx);
@@ -370,7 +386,8 @@ $("btnPick").onclick = () => $("file").click();
 $("btnGallery").onclick = () => $("fileGallery").click();
 $("file").onchange = e => { analyze(e.target.files[0]); e.target.value=""; };
 $("fileGallery").onchange = e => { analyze(e.target.files[0]); e.target.value=""; };
-$("btnAgain").onclick = () => { document.documentElement.style.setProperty("--lvl","#ffd23f"); show("home"); };
+$("btnAgain").onclick = () => { document.documentElement.style.setProperty("--lvl","#ffd23f"); pintarCupo(); show("home"); };
+pintarCupo();
 </script>
 </body>
 </html>
