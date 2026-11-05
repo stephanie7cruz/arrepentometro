@@ -7,12 +7,18 @@ const PROMPT =
   "Mira la fotografía y nombra el objeto principal que aparece, como si fuera algo que alguien quiere comprar " +
   "(una silla, una lámpara, unos zapatos, un celular, una planta, comida, ropa, etc.). " +
   "Si el nombre exacto o la marca no son claros, usa un nombre genérico del tipo de objeto. " +
-  "Además escribe UNA frase en español (máximo 160 caracteres) para convencer a la persona de NO comprarlo, " +
-  "específica de ese objeto, exagerada, dramática y con humor negro suave, mencionando un riesgo ridículo pero creíble " +
-  "(ejemplos: de un esfero: 'Se te puede explotar en el bolsillo y arruinarte el pantalón favorito.'; " +
-  "de una botella de agua: 'Podría traer microplásticos que ya te están construyendo una cuchara por dentro.'; " +
-  "de una sopa: 'Está tan grasosa que tus arterias ya están pidiendo un abogado.'). " +
-  "No uses insultos, no hables de enfermedades graves reales ni des consejos médicos; que sea claramente una broma. " +
+  "Además escribe en phrase un texto en español para convencer a la persona de NO comprarlo, específico de ese objeto. " +
+  "Formato: empieza con '¡No compres este/esta [objeto]!' y sigue con MÍNIMO 3 y máximo 5 preguntas que empiecen con '¿y si …?', " +
+  "cada una con una falla o problema REAL y plausible de ese tipo de objeto (durabilidad, mal funcionamiento, incomodidad, " +
+  "mancha, batería, sabor, talla, ruido, desconfiguración, malestar, etc.), contado de forma exagerada pero creíble. " +
+  "Cierra con una pregunta corta que cuestione si vale la pena el riesgo. Máximo 480 caracteres en total. " +
+  "Ejemplos de estilo: " +
+  "agua: '¡No compres esta agua! ¿y si tiene un sabor extraño y no lo notas hasta tomarla? ¿y si contiene microplásticos? " +
+  "¿y si tienes que ir al baño cinco veces y pierdes la tarde? ¿realmente quieres arriesgar tu tranquilidad por una botella?'; " +
+  "zapatos: '¡No compres estos zapatos! ¿y si te aprietan a los diez minutos? ¿y si te salen ampollas y caminas como pingüino? " +
+  "¿y si se despegan en plena calle? ¿realmente necesitas sufrir por verte bien?'. " +
+  "Otros ejemplos de fallas: un esfero que se explota y mancha la camisa, un reloj que se descarga rápido, se daña pronto o se desconfigura. " +
+  "Todo debe sonar a posibilidad (¿y si…?), sin insultos ni diagnósticos de enfermedades graves, y con humor. " +
   "Responde SOLO un JSON con las claves product (nombre corto, máximo 5 palabras, sin punto final) y phrase. " +
   "Si la imagen está vacía, borrosa o no muestra ningún objeto, usa product 'Producto desconocido' y phrase vacía.";
 
@@ -29,7 +35,7 @@ async function ask(model, image, signal) {
       contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: image } }] }],
       generationConfig: {
         temperature: 0.9,
-        maxOutputTokens: 400,
+        maxOutputTokens: 700,
         responseMimeType: "application/json",
         thinkingConfig: { thinkingBudget: 0 },
       },
@@ -44,7 +50,7 @@ async function ask(model, image, signal) {
   const clean = (v, n) => String(v || "").replace(/[\n"]/g, " ").trim().slice(0, n);
   const product = clean(j.product, 60).replace(/\.$/, "");
   if (!product) throw new Error(`${model} respuesta vacía`);
-  return { product, phrase: clean(j.phrase, 200) };
+  return { product, phrase: clean(j.phrase, 600) };
 }
 
 export default async function handler(req, res) {
